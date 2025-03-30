@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package pix;
+
+service PixService {
+  rpc ProcessPix (ProcessPixRequest) returns (ProcessPixResponse);
+}
+
+message ProcessPixRequest {
+  string fromAccount = 1;
+  string toAccount = 2;
+  double amount = 3;
+}
+
+message ProcessPixResponse {
+  string transactionId = 1;
+  string status = 2;
+}
