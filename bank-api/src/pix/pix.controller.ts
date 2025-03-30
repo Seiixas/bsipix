@@ -1,13 +1,13 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
+import { GrpcMethod } from '@nestjs/microservices';
 import { PixService } from './pix.service';
-import { ProcessPixRequest } from '../proto/pix';
 
-@Controller('pix')
+@Controller()
 export class PixController {
   constructor(private readonly pixService: PixService) {}
 
-  @Post()
-  async processPix(@Body() request: ProcessPixRequest) {
-    return this.pixService.processPix(request);
+  @GrpcMethod('PixService', 'ProcessPix')
+  async processPix(data: any): Promise<any> {
+    return this.pixService.processPix(data);
   }
 }

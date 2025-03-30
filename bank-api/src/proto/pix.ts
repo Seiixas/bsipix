@@ -266,17 +266,3 @@ export interface MessageFns<T> {
   create<I extends Exact<DeepPartial<T>, I>>(base?: I): T;
   fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T;
 }
-
-export const PIX_SERVICE_NAME = "PixService";
-export const PixServiceDesc = {
-  serviceName: "PixService",
-  methods: {
-    ProcessPix: {
-      methodName: "ProcessPix",
-      requestStream: false,
-      responseStream: false,
-      requestType: ProcessPixRequest,
-      responseType: ProcessPixResponse,
-    },
-  },
-};
