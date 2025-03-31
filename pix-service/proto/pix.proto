@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package pix;
+
+option go_package = "pix-service/proto";
+
+service PixService {
+  rpc ProcessPix (ProcessPixRequest) returns (ProcessPixResponse);
+  rpc GetTransactionStatus (GetTransactionStatusRequest) returns (GetTransactionStatusResponse);
+}
+
+message ProcessPixRequest {
+  string from_account = 1;
+  string to_account = 2;
+  double amount = 3;
+  string description = 4;
+}
+
+message ProcessPixResponse {
+  string transaction_id = 1;
+  string status = 2;
+  string error_message = 3;
+}
+
+message GetTransactionStatusRequest {
+  string transaction_id = 1;
+}
+
+message GetTransactionStatusResponse {
+  string transaction_id = 1;
+  string status = 2;
+  string from_account = 3;
+  string to_account = 4;
+  double amount = 5;
+  string description = 6;
+  string created_at = 7;
+  string error_message = 8;
+} 

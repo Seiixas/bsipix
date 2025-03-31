@@ -7,6 +7,9 @@ async function bootstrap() {
   // Criar a aplicação HTTP
   const app = await NestFactory.create(AppModule);
   
+  // Habilitar CORS
+  app.enableCors();
+  
   // Adicionar o microserviço gRPC
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.GRPC,
