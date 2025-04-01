@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Account } from './account.entity';
@@ -10,8 +10,66 @@ export class AccountsService {
     private accountsRepository: Repository<Account>,
   ) {}
 
+  private generateAccountNumber(): string {
+    const timestamp = Date.now().toString();
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `${timestamp.slice(-6)}${random}`;
+  }
+
+  private validateCPF(cpf: string): boolean {
+    // Remove caracteres não numéricos
+    cpf = cpf.replace(/[^\d]/g, '');
+
+    // Verifica se tem 11 dígitos
+    if (cpf.length !== 11) return false;
+
+    // Verifica se todos os dígitos são iguais
+    if (/^(\d)\1+$/.test(cpf)) return false;
+
+    // Validação do primeiro dígito verificador
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(cpf.charAt(i)) * (10 - i);
+    }
+    let digit = 11 - (sum % 11);
+    if (digit > 9) digit = 0;
+    if (digit !== parseInt(cpf.charAt(9))) return false;
+
+    // Validação do segundo dígito verificador
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(cpf.charAt(i)) * (11 - i);
+    }
+    digit = 11 - (sum % 11);
+    if (digit > 9) digit = 0;
+    if (digit !== parseInt(cpf.charAt(10))) return false;
+
+    return true;
+  }
+
   async createAccount(accountData: Partial<Account>): Promise<Account> {
-    const account = this.accountsRepository.create(accountData);
+    if (!accountData.cpf) {
+      throw new BadRequestException('CPF é obrigatório');
+    }
+
+    if (!this.validateCPF(accountData.cpf)) {
+      throw new BadRequestException('CPF inválido');
+    }
+
+    // Verifica se já existe uma conta com este CPF
+    const existingAccount = await this.accountsRepository.findOne({
+      where: { cpf: accountData.cpf },
+    });
+
+    if (existingAccount) {
+      throw new BadRequestException('Já existe uma conta com este CPF');
+    }
+
+    const accountNumber = this.generateAccountNumber();
+    const account = this.accountsRepository.create({
+      ...accountData,
+      accountNumber,
+    });
     return this.accountsRepository.save(account);
   }
 

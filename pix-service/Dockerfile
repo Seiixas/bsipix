@@ -5,8 +5,8 @@ WORKDIR /app
 # Instalar dependências do sistema
 RUN apk add --no-cache protobuf-dev
 
-# Instalar plugins do protoc
-RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.33.0
+# Instalar plugins do protoc com versões específicas
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.31.0
 RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3.0
 
 # Copiar todo o código

@@ -8,7 +8,7 @@ export const pixGrpcOptions = {
   options: {
     package: 'pix',
     protoPath: join(rootDir, 'proto/pix.proto'),
-    url: '0.0.0.0:50051',
+    url: 'localhost:50052',
     loader: {
       keepCase: true,
       longs: String,
@@ -16,5 +16,6 @@ export const pixGrpcOptions = {
       defaults: true,
       oneofs: true,
     },
+    deadline: 5000, // 5 segundos de timeout
   },
 };

@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 
 interface Account {
   id: string;
+  accountNumber: string;
   name: string;
+  cpf: string;
   balance: number;
 }
 
@@ -12,6 +14,7 @@ export default function Home() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountData, setAccountData] = useState({
     name: '',
+    cpf: '',
     balance: '',
   });
 
@@ -52,7 +55,7 @@ export default function Home() {
       
       const data = await response.json();
       alert(`Account created! ID: ${data.id}`);
-      setAccountData({ name: '', balance: '' });
+      setAccountData({ name: '', cpf: '', balance: '' });
       fetchAccounts();
     } catch (error) {
       alert('Error creating account: ' + error);
@@ -103,6 +106,18 @@ export default function Home() {
                   onChange={(e) => setAccountData({ ...accountData, name: e.target.value })}
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
+                <input
+                  type="text"
+                  value={accountData.cpf}
+                  onChange={(e) => setAccountData({ ...accountData, cpf: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                  pattern="[0-9]{11}"
+                  title="CPF deve conter 11 dígitos numéricos"
                 />
               </div>
               <div>
@@ -197,7 +212,7 @@ export default function Home() {
             {accounts.map((account) => (
               <div key={account.id} className="p-4 border border-gray-200 rounded-md hover:shadow-md transition-shadow">
                 <h3 className="font-semibold text-gray-900">{account.name}</h3>
-                <p className="text-sm text-gray-600">ID: {account.id}</p>
+                <p className="text-sm text-gray-600">Account: {account.accountNumber}</p>
                 <p className="text-lg font-bold text-green-600 mt-2">
                   R$ {account.balance.toFixed(2)}
                 </p>
