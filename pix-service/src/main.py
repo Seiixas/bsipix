@@ -84,11 +84,26 @@ class PixService(pix_pb2_grpc.PixServiceServicer):
         """Realiza a transferência de dinheiro entre contas"""
         try:
             # Verificar saldo da conta de origem
+            logger.info(f"Verificando saldo da conta {from_account}")
             response = requests.get(f"{self.bank_api_url}/accounts/{from_account}")
+            logger.info(f"Resposta da API: {response.text}")
+            
             if response.status_code != 200:
                 raise Exception(f"Conta de origem não encontrada: {from_account}")
             
-            from_account_data = response.json()
+            accounts = response.json()
+            logger.info(f"Dados das contas: {accounts}")
+            
+            # Encontrar a conta de origem na lista
+            from_account_data = None
+            for account in accounts:
+                if account['accountNumber'] == from_account:
+                    from_account_data = account
+                    break
+            
+            if not from_account_data:
+                raise Exception(f"Conta de origem não encontrada: {from_account}")
+            
             if from_account_data['balance'] < amount:
                 raise Exception(f"Saldo insuficiente na conta de origem: {from_account}")
 
@@ -99,10 +114,13 @@ class PixService(pix_pb2_grpc.PixServiceServicer):
                 "amount": amount
             }
             
+            logger.info(f"Enviando requisição de transferência: {transfer_data}")
             response = requests.post(
                 f"{self.bank_api_url}/accounts/transfer",
                 json=transfer_data
             )
+            
+            logger.info(f"Resposta da transferência: {response.text}")
             
             if response.status_code != 200:
                 raise Exception(f"Erro ao realizar transferência: {response.text}")
