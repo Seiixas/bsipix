@@ -122,10 +122,14 @@ class PixService(pix_pb2_grpc.PixServiceServicer):
             logger.info(f"Status code da transferência: {response.status_code}")
             logger.info(f"Resposta da transferência: {response.text}")
             
-            if response.status_code != 200:
+            if response.status_code not in [200, 201]:
                 raise Exception(f"Erro ao realizar transferência: {response.text}")
             
-            return response.json()
+            transfer_result = response.json()
+            if not transfer_result.get('success'):
+                raise Exception(f"Erro ao realizar transferência: {transfer_result.get('message', 'Erro desconhecido')}")
+            
+            return transfer_result
         except Exception as e:
             logger.error(f"Erro na transferência: {str(e)}")
             raise
