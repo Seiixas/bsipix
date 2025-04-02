@@ -11,9 +11,9 @@ export class AccountsService {
   ) {}
 
   private generateAccountNumber(): string {
-    const timestamp = Date.now().toString();
+    const timestamp = Date.now().toString().slice(-6);
     const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `${timestamp.slice(-6)}${random}`;
+    return `${timestamp}${random}`;
   }
 
   private validateCPF(cpf: string): boolean {
@@ -83,5 +83,42 @@ export class AccountsService {
 
   async updateBalance(accountNumber: string, newBalance: number): Promise<void> {
     await this.accountsRepository.update({ accountNumber }, { balance: newBalance });
+  }
+
+  async getAccount(accountNumber: string): Promise<Account> {
+    return this.accountsRepository.findOne({ where: { accountNumber } });
+  }
+
+  async transferMoney(data: {
+    from_account: string;
+    to_account: string;
+    amount: number;
+  }): Promise<{ success: boolean; message: string }> {
+    const fromAccount = await this.getAccount(data.from_account);
+    const toAccount = await this.getAccount(data.to_account);
+
+    if (!fromAccount || !toAccount) {
+      throw new Error('Conta não encontrada');
+    }
+
+    if (fromAccount.balance < data.amount) {
+      throw new Error('Saldo insuficiente');
+    }
+
+    // Iniciar transação
+    await this.accountsRepository.manager.transaction(async (transactionalEntityManager) => {
+      // Deduzir da conta de origem
+      fromAccount.balance -= data.amount;
+      await transactionalEntityManager.save(fromAccount);
+
+      // Adicionar na conta de destino
+      toAccount.balance += data.amount;
+      await transactionalEntityManager.save(toAccount);
+    });
+
+    return {
+      success: true,
+      message: 'Transferência realizada com sucesso',
+    };
   }
 }

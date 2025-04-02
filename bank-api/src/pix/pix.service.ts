@@ -1,43 +1,58 @@
-import { Inject, Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import { Observable, from, timeout } from 'rxjs';
-import { PixServiceClient, ProcessPixRequest, ProcessPixResponse } from '../proto/pix';
+import { firstValueFrom, Observable } from 'rxjs';
+
+interface IPixService {
+  ProcessPix(data: {
+    from_account: string;
+    to_account: string;
+    amount: number;
+    description: string;
+  }): Observable<{
+    transaction_id: string;
+    status: string;
+    error?: string;
+  }>;
+  GetTransactionStatus(data: { transaction_id: string }): Observable<{
+    transaction_id: string;
+    from_account: string;
+    to_account: string;
+    amount: number;
+    description: string;
+    status: string;
+    error?: string;
+    created_at: string;
+  }>;
+}
 
 @Injectable()
-export class PixService implements OnModuleInit {
-  private readonly logger = new Logger(PixService.name);
-  private pixService: PixServiceClient;
+export class PixService {
+  private pixService: IPixService;
 
-  constructor(@Inject('PIX_PACKAGE_NAME') private client: ClientGrpc) {}
+  constructor(@Inject('PIX_SERVICE') private client: ClientGrpc) {
+    this.pixService = this.client.getService<IPixService>('PixService');
+  }
 
-  onModuleInit() {
-    this.logger.log('Inicializando serviço PIX...');
+  async processPix(data: {
+    from_account: string;
+    to_account: string;
+    amount: number;
+    description: string;
+  }) {
     try {
-      this.pixService = this.client.getService<PixServiceClient>('PixService');
-      this.logger.log('Serviço PIX inicializado com sucesso');
+      return await firstValueFrom(this.pixService.ProcessPix(data));
     } catch (error) {
-      this.logger.error(`Erro ao inicializar serviço PIX: ${error.message}`);
+      console.error('Erro ao processar PIX:', error);
       throw error;
     }
   }
 
-  processPix(request: ProcessPixRequest): Observable<ProcessPixResponse> {
-    this.logger.log(`Iniciando processamento PIX: ${JSON.stringify(request)}`);
-    
-    return from(new Promise<ProcessPixResponse>((resolve, reject) => {
-      this.logger.log('Tentando conectar ao serviço PIX...');
-      this.pixService.processPix(request, (error, response) => {
-        if (error) {
-          this.logger.error(`Erro no processamento PIX: ${error.message}`);
-          this.logger.error(`Detalhes do erro: ${JSON.stringify(error)}`);
-          reject(error);
-        } else {
-          this.logger.log(`PIX processado com sucesso: ${JSON.stringify(response)}`);
-          resolve(response);
-        }
-      });
-    })).pipe(
-      timeout(10000) // 10 segundos de timeout
-    );
+  async getTransactionStatus(transaction_id: string) {
+    try {
+      return await firstValueFrom(this.pixService.GetTransactionStatus({ transaction_id }));
+    } catch (error) {
+      console.error('Erro ao consultar status da transação:', error);
+      throw error;
+    }
   }
 }

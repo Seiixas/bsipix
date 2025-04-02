@@ -62,15 +62,20 @@ export default function Home() {
     }
   };
 
-  const sendPix = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3000/pix', {
+      const response = await fetch('http://localhost:3000/pix/process', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(pixData),
+        body: JSON.stringify({
+          from_account: pixData.fromAccount,
+          to_account: pixData.toAccount,
+          amount: parseFloat(pixData.amount),
+          description: pixData.description,
+        }),
       });
       
       if (!response.ok) throw new Error('Failed to send Pix');
@@ -142,7 +147,7 @@ export default function Home() {
           {/* Send Pix Form */}
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-semibold mb-4 text-gray-800">Send Pix</h2>
-            <form onSubmit={sendPix} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">From Account</label>
                 <select

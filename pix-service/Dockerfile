@@ -1,25 +1,36 @@
-FROM golang:1.21-alpine
+FROM python:3.11-slim
 
 WORKDIR /app
 
 # Instalar dependências do sistema
-RUN apk add --no-cache protobuf-dev
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instalar plugins do protoc com versões específicas
-RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.31.0
-RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3.0
+# Copiar arquivos de requisitos
+COPY requirements.txt .
 
-# Copiar todo o código
+# Instalar dependências Python
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar arquivos do projeto
 COPY . .
 
-# Gerar arquivos protobuf
-RUN protoc --go_out=. --go_opt=paths=source_relative \
-    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-    proto/pix.proto
+# Gerar arquivos proto
+RUN python -m grpc_tools.protoc \
+    -I./proto \
+    --python_out=. \
+    --grpc_python_out=. \
+    ./proto/pix.proto
 
-# Baixar dependências e compilar
-RUN go mod tidy && go build -o main .
+# Criar diretório src se não existir
+RUN mkdir -p src
 
+# Mover arquivos gerados para o diretório src
+RUN mv pix_pb2*.py src/
+
+# Expor porta do gRPC
 EXPOSE 50051
 
-CMD ["./main"] 
+# Comando para executar o servidor
+CMD ["python", "src/main.py"] 
