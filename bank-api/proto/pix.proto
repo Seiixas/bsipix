@@ -10,9 +10,11 @@ message ProcessPixRequest {
   string fromAccount = 1;
   string toAccount = 2;
   double amount = 3;
+  string description = 4;
 }
 
 message ProcessPixResponse {
-  string transactionId = 1;
+  string transaction_id = 1;
   string status = 2;
+  string error = 3;
 }

@@ -11,7 +11,7 @@ interface IPixService {
   }): Observable<{
     transaction_id: string;
     status: string;
-    error?: string;
+    error: string;
   }>;
   GetTransactionStatus(data: { transaction_id: string }): Observable<{
     transaction_id: string;
@@ -20,7 +20,7 @@ interface IPixService {
     amount: number;
     description: string;
     status: string;
-    error?: string;
+    error: string;
     created_at: string;
   }>;
 }
@@ -48,6 +48,11 @@ export class PixService {
         description: data.description,
       }));
       console.log('Resposta do serviço gRPC:', result);
+      
+      if (!result.transaction_id) {
+        throw new Error('ID da transação não recebido do serviço PIX');
+      }
+      
       return result;
     } catch (error) {
       console.error('Erro ao processar PIX:', error);

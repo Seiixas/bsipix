@@ -25,6 +25,8 @@ export default function Home() {
     description: '',
   });
 
+  const [successMessage, setSuccessMessage] = useState('');
+
   useEffect(() => {
     fetchAccounts();
   }, []);
@@ -72,7 +74,7 @@ export default function Home() {
         description: pixData.description,
       });
 
-      const response = await fetch('http://localhost:3000/pix/process', {
+      const response = await fetch('/api/pix', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,14 +83,22 @@ export default function Home() {
           from_account: pixData.fromAccount,
           to_account: pixData.toAccount,
           amount: parseFloat(pixData.amount),
-          description: pixData.description,
+          description: pixData.description
         }),
       });
-      
-      if (!response.ok) throw new Error('Failed to send Pix');
-      
+
       const data = await response.json();
-      alert(`Pix sent! Transaction ID: ${data.transaction_id}`);
+      console.log('Resposta da API:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao processar PIX');
+      }
+
+      if (!data.transaction_id) {
+        throw new Error('ID da transação não recebido');
+      }
+
+      setSuccessMessage(`PIX realizado com sucesso! ID da transação: ${data.transaction_id}`);
       setPixData({
         fromAccount: '',
         toAccount: '',
@@ -232,6 +242,13 @@ export default function Home() {
             ))}
           </div>
         </div>
+
+        {successMessage && (
+          <div className="bg-white p-6 rounded-lg shadow-md mt-4">
+            <h2 className="text-2xl font-semibold mb-4 text-green-600">PIX realizado com sucesso!</h2>
+            <p>{successMessage}</p>
+          </div>
+        )}
       </div>
     </main>
   );

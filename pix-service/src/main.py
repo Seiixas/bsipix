@@ -209,14 +209,19 @@ class PixService(pix_pb2_grpc.PixServiceServicer):
 
             return PixResponse(
                 transaction_id=transaction_id,
-                status=transaction.status
+                status=transaction.status,
+                error=''
             )
 
         except Exception as e:
             logger.error(f"Erro ao processar PIX: {str(e)}")
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f'Erro ao processar PIX: {str(e)}')
-            return PixResponse()
+            return PixResponse(
+                transaction_id='',
+                status='ERROR',
+                error=str(e)
+            )
 
     def GetTransactionStatus(self, request, context):
         logger.info(f"Consultando status da transação: {request.transaction_id}")
