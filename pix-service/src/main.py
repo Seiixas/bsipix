@@ -86,25 +86,24 @@ class PixService(pix_pb2_grpc.PixServiceServicer):
             # Verificar saldo da conta de origem
             logger.info(f"Verificando saldo da conta {from_account}")
             response = requests.get(f"{self.bank_api_url}/accounts/{from_account}")
+            logger.info(f"Status code da resposta: {response.status_code}")
             logger.info(f"Resposta da API: {response.text}")
             
             if response.status_code != 200:
+                raise Exception(f"Erro ao buscar conta de origem: {response.text}")
+            
+            account_data = response.json()
+            logger.info(f"Dados da conta: {account_data}")
+            
+            if not account_data:
                 raise Exception(f"Conta de origem não encontrada: {from_account}")
             
-            accounts = response.json()
-            logger.info(f"Dados das contas: {accounts}")
-            
-            # Encontrar a conta de origem na lista
-            from_account_data = None
-            for account in accounts:
-                if account['accountNumber'] == from_account:
-                    from_account_data = account
-                    break
-            
-            if not from_account_data:
+            if account_data.get('accountNumber') != from_account:
                 raise Exception(f"Conta de origem não encontrada: {from_account}")
             
-            if from_account_data['balance'] < amount:
+            logger.info(f"Conta de origem encontrada: {account_data}")
+            
+            if account_data.get('balance', 0) < amount:
                 raise Exception(f"Saldo insuficiente na conta de origem: {from_account}")
 
             # Realizar a transferência
@@ -120,6 +119,7 @@ class PixService(pix_pb2_grpc.PixServiceServicer):
                 json=transfer_data
             )
             
+            logger.info(f"Status code da transferência: {response.status_code}")
             logger.info(f"Resposta da transferência: {response.text}")
             
             if response.status_code != 200:
@@ -133,6 +133,13 @@ class PixService(pix_pb2_grpc.PixServiceServicer):
     def ProcessPix(self, request, context):
         logger.info(f"Recebida requisição de PIX: {request}")
         try:
+            # Validar os campos obrigatórios
+            if not request.fromAccount or not request.toAccount:
+                logger.warning("Número da conta de origem ou destino não fornecido")
+                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+                context.set_details('Número da conta de origem e destino são obrigatórios')
+                return PixResponse()
+
             # Validar o valor da transação
             if request.amount <= 0:
                 logger.warning(f"Valor inválido recebido: {request.amount}")
@@ -141,24 +148,24 @@ class PixService(pix_pb2_grpc.PixServiceServicer):
                 return PixResponse()
 
             # Criar ID único para a transação
-            transaction_id = f"PIX_{int(time.time())}_{request.from_account[:4]}"
+            transaction_id = f"PIX_{int(time.time())}_{request.fromAccount[:4]}"
             logger.info(f"Criada transação com ID: {transaction_id}")
 
             # Criar objeto de transação
             transaction = Transaction(
                 id=transaction_id,
-                from_account=request.from_account,
-                to_account=request.to_account,
+                from_account=request.fromAccount,
+                to_account=request.toAccount,
                 amount=request.amount,
                 description=request.description
             )
 
             # Realizar a transferência
             try:
-                logger.info(f"Iniciando transferência de {request.amount} da conta {request.from_account} para {request.to_account}")
+                logger.info(f"Iniciando transferência de {request.amount} da conta {request.fromAccount} para {request.toAccount}")
                 transfer_result = self._transfer_money(
-                    request.from_account,
-                    request.to_account,
+                    request.fromAccount,
+                    request.toAccount,
                     request.amount
                 )
                 transaction.status = "completed"
@@ -180,8 +187,8 @@ class PixService(pix_pb2_grpc.PixServiceServicer):
                 logger.info(f"Enviando transação {transaction_id} para o Kafka")
                 self.kafka_producer.send('pix_transactions', {
                     'transaction_id': transaction_id,
-                    'from_account': request.from_account,
-                    'to_account': request.to_account,
+                    'from_account': request.fromAccount,
+                    'to_account': request.toAccount,
                     'amount': request.amount,
                     'description': request.description,
                     'status': transaction.status,

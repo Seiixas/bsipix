@@ -8,6 +8,7 @@ export class PixController {
 
   @Post('process')
   async processPix(@Body() data: ProcessPixDto) {
+    console.log('Recebida requisição PIX:', data);
     return this.pixService.processPix(data);
   }
 

@@ -65,6 +65,13 @@ export default function Home() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      console.log('Enviando dados PIX:', {
+        from_account: pixData.fromAccount,
+        to_account: pixData.toAccount,
+        amount: parseFloat(pixData.amount),
+        description: pixData.description,
+      });
+
       const response = await fetch('http://localhost:3000/pix/process', {
         method: 'POST',
         headers: {
@@ -81,7 +88,7 @@ export default function Home() {
       if (!response.ok) throw new Error('Failed to send Pix');
       
       const data = await response.json();
-      alert(`Pix sent! Transaction ID: ${data.transactionId}`);
+      alert(`Pix sent! Transaction ID: ${data.transaction_id}`);
       setPixData({
         fromAccount: '',
         toAccount: '',
@@ -158,8 +165,8 @@ export default function Home() {
                 >
                   <option value="">Select account</option>
                   {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.name} - R$ {account.balance.toFixed(2)}
+                    <option key={account.id} value={account.accountNumber}>
+                      {account.name} - {account.accountNumber} - R$ {account.balance.toFixed(2)}
                     </option>
                   ))}
                 </select>
@@ -174,8 +181,8 @@ export default function Home() {
                 >
                   <option value="">Select account</option>
                   {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.name} - R$ {account.balance.toFixed(2)}
+                    <option key={account.id} value={account.accountNumber}>
+                      {account.name} - {account.accountNumber} - R$ {account.balance.toFixed(2)}
                     </option>
                   ))}
                 </select>

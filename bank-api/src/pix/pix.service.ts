@@ -4,8 +4,8 @@ import { firstValueFrom, Observable } from 'rxjs';
 
 interface IPixService {
   ProcessPix(data: {
-    from_account: string;
-    to_account: string;
+    fromAccount: string;
+    toAccount: string;
     amount: number;
     description: string;
   }): Observable<{
@@ -40,7 +40,15 @@ export class PixService {
     description: string;
   }) {
     try {
-      return await firstValueFrom(this.pixService.ProcessPix(data));
+      console.log('Enviando requisição PIX para o serviço gRPC:', data);
+      const result = await firstValueFrom(this.pixService.ProcessPix({
+        fromAccount: data.from_account,
+        toAccount: data.to_account,
+        amount: data.amount,
+        description: data.description,
+      }));
+      console.log('Resposta do serviço gRPC:', result);
+      return result;
     } catch (error) {
       console.error('Erro ao processar PIX:', error);
       throw error;

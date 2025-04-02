@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const response = await fetch('http://bank-api:3000/pix', {
+    const response = await fetch('http://localhost:3000/pix/process', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
