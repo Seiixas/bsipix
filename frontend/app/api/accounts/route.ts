@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const response = await fetch('http://bank-api:3000/accounts', {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/accounts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    const response = await fetch('http://bank-api:3000/accounts');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/accounts`);
 
     if (!response.ok) {
       throw new Error('Failed to fetch accounts');

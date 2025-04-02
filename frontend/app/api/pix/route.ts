@@ -5,7 +5,7 @@ export async function POST(request: Request) {
     const data = await request.json();
     console.log('Dados recebidos:', data);
 
-    const response = await fetch('http://localhost:3000/pix/process', {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pix/process`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -33,7 +33,7 @@ export default function Home() {
 
   const fetchAccounts = async () => {
     try {
-      const response = await fetch('http://localhost:3000/accounts');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/accounts`);
       if (!response.ok) throw new Error('Failed to fetch accounts');
       const data = await response.json();
       setAccounts(data);
@@ -45,7 +45,7 @@ export default function Home() {
   const createAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3000/accounts', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/accounts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
