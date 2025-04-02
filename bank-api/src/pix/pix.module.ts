@@ -13,7 +13,7 @@ import { PixService } from './pix.service';
         options: {
           package: 'pix',
           protoPath: join(__dirname, '../../proto/pix.proto'),
-          url: 'localhost:50052',
+          url: 'pix-service:50051',
           loader: {
             keepCase: true,
             longs: String,

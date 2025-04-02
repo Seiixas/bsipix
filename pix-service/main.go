@@ -119,7 +119,7 @@ func main() {
 
 	producer, err := sarama.NewSyncProducer([]string{kafkaBrokers}, config)
 	if err != nil {
-		log.Fatalf("Failed to connect to Kafka: %v", err)
+		log.Fatalf("Failed to create Kafka producer: %v", err)
 	}
 	defer producer.Close()
 

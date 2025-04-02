@@ -20,27 +20,28 @@ services:
       timeout: 5s
       retries: 5
 
-  # bank-api:
-  #   build: ./bank-api
-  #   container_name: bank-api
-  #   ports:
-  #     - "3001:3001"
-  #   environment:
-  #     - DB_HOST=postgres
-  #     - DB_PORT=5432
-  #     - DB_USERNAME=postgres
-  #     - DB_PASSWORD=postgres
-  #     - DB_DATABASE=bank_db
-  #   depends_on:
-  #     - postgres
-  #   networks:
-  #     - bank-network
+  bank-api:
+    build: ./bank-api
+    container_name: bank-api
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_DATABASE=bank_db
+    depends_on:
+      - postgres
+      - pix-service
+    networks:
+      - bank-network
 
   pix-service:
     build: ./pix-service
     container_name: pix-service
     ports:
-      - "50052:50051"
+      - "50051:50051"
     environment:
       - KAFKA_BROKERS=kafka:9092
     depends_on:
@@ -48,6 +49,8 @@ services:
         condition: service_healthy
     networks:
       - bank-network
+    expose:
+      - "50051"
 
   kafka:
     image: wurstmeister/kafka
