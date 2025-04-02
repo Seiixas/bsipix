@@ -8,6 +8,7 @@ import os
 import sys
 import logging
 import requests
+from requests.exceptions import RequestException
 
 # Configurar logging
 logging.basicConfig(
@@ -43,9 +44,13 @@ class PixService(pix_pb2_grpc.PixServiceServicer):
     def __init__(self):
         logger.info("Inicializando serviço PIX...")
         self.transactions = {}
-        self.bank_api_url = os.getenv('BANK_API_URL', 'http://localhost:3000')
+        self.bank_api_url = os.getenv('BANK_API_URL', 'http://bank-api:3000')
+        self._init_kafka()
+        self._wait_for_bank_api()
+
+    def _init_kafka(self):
         try:
-            kafka_brokers = os.getenv('KAFKA_BROKERS', 'localhost:9092')
+            kafka_brokers = os.getenv('KAFKA_BROKERS', 'kafka:29092')
             logger.info(f"Conectando ao Kafka em {kafka_brokers}")
             self.kafka_producer = kafka.KafkaProducer(
                 bootstrap_servers=[kafka_brokers],
@@ -55,6 +60,25 @@ class PixService(pix_pb2_grpc.PixServiceServicer):
         except Exception as e:
             logger.error(f"Erro ao conectar ao Kafka: {str(e)}")
             raise
+
+    def _wait_for_bank_api(self):
+        max_retries = 5
+        retry_delay = 5
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Tentando conectar à API do banco em {self.bank_api_url} (tentativa {attempt + 1}/{max_retries})")
+                response = requests.get(f"{self.bank_api_url}/health")
+                if response.status_code == 200:
+                    logger.info("Conexão com a API do banco estabelecida com sucesso")
+                    return
+            except RequestException as e:
+                logger.warning(f"Erro ao conectar à API do banco: {str(e)}")
+                if attempt < max_retries - 1:
+                    logger.info(f"Aguardando {retry_delay} segundos antes da próxima tentativa...")
+                    time.sleep(retry_delay)
+                else:
+                    logger.error("Não foi possível conectar à API do banco após várias tentativas")
+                    raise
 
     def _transfer_money(self, from_account, to_account, amount):
         """Realiza a transferência de dinheiro entre contas"""
